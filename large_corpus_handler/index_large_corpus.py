@@ -35,11 +35,29 @@ class DocumentProcessor:
         self.docs_num = 0  # 文档总数
         self.total_doc_len = 0  # 文档总长度，用于计算平均长度
         self.avg_doc_len = 0  # 平均文档长度
+        self.load_stopwords()
         self.process_documents()
 
-    def read_documents(self):
-        """读取文档集合并做简单的处理：转换为小写、移除标点、分割为术语。"""
-        print("Reading documents...")
+    def count_valid_files_number(self, directory):
+        """计算目录及其子目录中以'GX'开头的文件数量。"""
+        total_files = 0
+        for subdir, dirs, files in os.walk(directory):
+            for file in files:
+                if file.startswith("GX"):
+                    total_files += 1
+        return total_files
+
+    def load_stopwords(self):
+        """从文件加载停用词列表。"""
+        with open(self.stopwords_file_path, 'r', encoding='UTF-8') as file:
+            for line in file:
+                self.stopwords.add(line.strip())
+
+    def process_documents(self):
+        """执行完整的文档处理流程：读取、去停用词、词干提取。"""
+        print("Start documents preprocessing, please Waiting...")
+        start = time.time()
+        total_files = self.count_valid_files_number(self.documents_dir_path)
         for subdir in os.listdir(self.documents_dir_path):  # 遍历documents目录下的所有子文件夹
             subdir_path = os.path.join(self.documents_dir_path, subdir)
             if os.path.isdir(subdir_path):
@@ -50,43 +68,26 @@ class DocumentProcessor:
                             text = file.read().lower()
                             text = text.translate(str.maketrans('', '', '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'))  # 移除标点符号
                             tokens = text.split()
+                            tokens = self.remove_stopwords(tokens)  # 移除停用词
+                            tokens = self.stem_words(tokens)  # 词干提取
                             self.documents[filename] = tokens
                             self.docs_num += 1  # 更新文档总数
                             self.total_doc_len += len(tokens)  # 累加当前文档的长度
+                        if self.docs_num % 100 == 0 or self.docs_num == total_files:
+                            print(f"Processing documents {self.docs_num}/{total_files}")
             # 所有文档处理完毕后计算平均文档长度
         if self.docs_num > 0:
             self.avg_doc_len = self.total_doc_len / self.docs_num
-
-    def load_stopwords(self):
-        """从文件加载停用词列表。"""
-        with open(self.stopwords_file_path, 'r', encoding='UTF-8') as file:
-            for line in file:
-                self.stopwords.add(line.strip())
-
-    def remove_stopwords(self):
-        """从文档中移除停用词。"""
-        for i, doc in enumerate(list(self.documents)):
-            self.documents[doc] = [term for term in self.documents[doc] if term not in self.stopwords]
-            if (i + 1) % 100 == 0 or i + 1 == self.docs_num:
-                print(f"Removing stopwords from documents {i + 1}/{self.docs_num}")
-
-    def stem_words(self):
-        """对文档中的术语进行词干提取。"""
-        for i, doc in enumerate(list(self.documents)):
-            self.documents[doc] = [self.stemmer.stem(term) for term in self.documents[doc]]
-            if (i + 1) % 100 == 0 or i + 1 == self.docs_num:
-                print(f"Stemming words in documents {i + 1}/{self.docs_num}")
-
-    def process_documents(self):
-        """执行完整的文档处理流程：读取、去停用词、词干提取。"""
-        print("Start processing documents, please Waiting...")
-        start = time.time()
-        self.read_documents()
-        self.load_stopwords()
-        self.remove_stopwords()
-        self.stem_words()
         end = time.time()
         print(f"Document processing completed in {end - start:.2f} seconds.\n")
+
+    def remove_stopwords(self, tokens):
+        """从给定的术语列表中移除停用词。"""
+        return [term for term in tokens if term not in self.stopwords]
+
+    def stem_words(self, tokens):
+        """对给定的术语列表进行词干提取。"""
+        return [self.stemmer.stem(term) for term in tokens]
 
 
 class BM25Index:
@@ -109,7 +110,7 @@ class BM25Index:
                     idf[term] = 1
                 else:
                     idf[term] += 1
-            if (i + 1) % 100 == 0 or i + 1 == self.processor.docs_num:
+            if (i + 1) % 1000 == 0 or i + 1 == self.processor.docs_num:
                 print(f"Computing terms IDF values for documents {i + 1}/{self.processor.docs_num}")
         for term in idf:
             idf[term] = math.log2(1 + (self.processor.docs_num - idf[term] + 0.5) / (idf[term] + 0.5))
@@ -132,7 +133,7 @@ class BM25Index:
                 f_ij = tf[doc][term]
                 tf[doc][term] = (f_ij * (1 + self.k)) / (
                         f_ij + self.k * (1 - self.b + self.b * len(documents[doc]) / self.processor.avg_doc_len))
-            if (i + 1) % 100 == 0 or i + 1 == self.processor.docs_num:
+            if (i + 1) % 1000 == 0 or i + 1 == self.processor.docs_num:
                 print(f"Computing documents TF values for documents {i + 1}/{self.processor.docs_num}")
         # print("Documents TF values: " + str(tf) + "\n")
         # 计算后的文档集合中的各个文档的TF的格式如下:
@@ -151,7 +152,7 @@ class BM25Index:
                     scores[doc][term] = 0
                 else:
                     scores[doc][term] = self.idf[term] * self.tf[doc][term]
-            if (i + 1) % 100 == 0 or i + 1 == self.processor.docs_num:
+            if (i + 1) % 1000 == 0 or i + 1 == self.processor.docs_num:
                 print(f"Computing BM25 scores for documents {i + 1}/{self.processor.docs_num}")
         # print("Documents BM25 scores: " + str(scores) + "\n")
         return scores
@@ -163,7 +164,7 @@ class BM25Index:
         self.tf = self.compute_documents_tf()
         self.bm25_scores = self.compute_bm25_scores()
         end = time.time()
-        print(f"BM25 scores computed in {end - start:.2f}.\n")
+        print(f"BM25 scores computed in {end - start:.2f} seconds.\n")
 
     def export_to_json(self, output_dir):
         """导出 BM25 分数到 JSON 文件"""
@@ -184,9 +185,12 @@ def main():
     documents_path = os.path.join(args.path, "documents")
     stopwords_path = os.path.join(args.path, "files", "stopwords.txt")
 
+    start = time.time()
     index = BM25Index(DocumentProcessor(documents_path, stopwords_path))
     index.export_to_json(os.getcwd())
-    print(f"Index has been exported to 21207500-large.index.json")
+    end = time.time()
+    print(f"Indexing completed in {end - start:.2f} seconds.")
+
 
 if __name__ == "__main__":
     main()
