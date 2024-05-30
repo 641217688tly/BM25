@@ -37,8 +37,12 @@ class BM25:
 
     def load_index(self, index_file_path):
         """加载索引文件到内存中。"""
+        print(f"Loading index file...")
+        start = time.time()
         with open(index_file_path, 'r', encoding='utf-8') as file:
             index = json.load(file)
+        end = time.time()
+        print(f"Index loaded in {end - start:.4f} seconds.")
         return index
 
     def load_stopwords(self, stopwords_file):
@@ -91,11 +95,10 @@ class BM25:
             total_time = 0
             for line in qfile:
                 query_id, query = line.strip().split(' ', 1)
-                start_time = time.time()
+                start = time.time()
                 results = self.perform_query(query)
-                end_time = time.time()
-                duration = end_time - start_time
-                total_time += duration
+                end = time.time()
+                total_time += end - start
                 for rank, (doc_id, score) in enumerate(results, start=1):
                     ofile.write(f"{query_id} {doc_id} {rank} {score:.4f}\n")
             print(f"Queries completed in {total_time:.4f} seconds.")
@@ -108,10 +111,11 @@ def main():
     parser.add_argument('-p', '--path', type=str, required=True, help="Path to the corpus")
     args = parser.parse_args()
 
-    index_file_path = os.path.join(os.getcwd(), "21207500-large.index.json")
+    index_file_path = os.path.join(os.getcwd(), "(old)21207500-large.index.json")
     stopwords_file_path = os.path.join(args.path, "files", "stopwords.txt")
     if not os.path.exists(stopwords_file_path):  # 如果stopwords_file_path中的文件不存在,则使用默认的stopwords.txt文件
         stopwords_file_path = os.path.join(os.getcwd(), "files", "stopwords.txt")
+
     bm25 = BM25(index_file_path, stopwords_file_path)
 
     if args.mode == 'interactive':
