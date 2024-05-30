@@ -7,8 +7,6 @@
 ```cmd
 python index_small_corpus.py -p "E:\1University\stage 3\9Information Retrieval\Assignment\comp3009j-corpus-small"
 ```
-E:\1University\stage 3\9Information Retrieval\Assignment\comp3009j-corpus-small
-
 
 **query_small_corpus.py:**
 

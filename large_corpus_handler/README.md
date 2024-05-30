@@ -1,5 +1,30 @@
 # COMP3009J Information Retrieval
 
+## Commands
+
+**index_large_corpus.py:**
+
+```cmd
+python index_large_corpus.py -p "E:\1University\stage 3\9Information Retrieval\Assignment\comp3009j-corpus-large"
+```
+
+**query_large_corpus.py:**
+
+```cmd
+python query_large_corpus.py -m interactive -p "E:\1University\stage 3\9Information Retrieval\Assignment\comp3009j-corpus-large"
+```
+
+```cmd
+python query_large_corpus.py -m automatic -p "E:\1University\stage 3\9Information Retrieval\Assignment\comp3009j-corpus-large"
+```
+
+**evaluate_large_corpus.py:**
+
+```cmd
+python evaluate_large_corpus.py -p "E:\1University\stage 3\9Information Retrieval\Assignment\comp3009j-corpus-large"
+```
+
+
 ## Large Document Corpus for Programming Assignment: Version 1.3
 
 This file describes the contents of the corpus and associated files, along with their formats.
