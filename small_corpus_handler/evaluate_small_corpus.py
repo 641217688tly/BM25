@@ -198,8 +198,8 @@ class Estimator:
         print(f"Recall:       {self.recall(self.ret, self.rel):.3f}")
         print(f"R-precision:  {self.r_precision(self.ret, self.rel):.3f}")
         print(f"P@15:         {self.precision_at_10(self.ret, self.rel):.3f}")
-        print(f"NDCG@15       {self.ndcg_at_15(self.ret, self.rel):.3f}")
         print(f"MAP:          {self.map(self.ret, self.rel):.3f}")
+        print(f"NDCG@15       {self.ndcg_at_15(self.ret, self.rel):.3f}")
 
 
 def main():
