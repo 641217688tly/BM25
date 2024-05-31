@@ -17,47 +17,47 @@ class BM25:
         self.stemmer = porter.PorterStemmer()
 
     def load_index(self, index_file_path):
-        """加载索引文件到内存中。"""
+        """Load the index file into memory."""
         with open(index_file_path, 'r', encoding='utf-8') as file:
             index = json.load(file)
         return index
 
     def load_stopwords(self, stopwords_file):
-        """从文件中加载停用词。"""
+        """Load stopwords from file."""
         with open(stopwords_file, 'r', encoding='utf-8') as file:
             return set(line.strip() for line in file)
 
     def process_query(self, query):
-        """处理查询：转换为小写，移除标点，去除停用词，执行词干提取。"""
-        query = query.translate(str.maketrans('', '', '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'))  # 移除标点
-        terms = query.lower().split()  # 转换为小写并分割
-        terms = [term for term in terms if term not in self.stopwords]  # 去除停用词
-        terms = [self.stemmer.stem(term) for term in terms]  # 执行词干提取
+        """Process the query: convert to lowercase, remove punctuation, remove stopwords, and perform stemming."""
+        query = query.translate(str.maketrans('', '', '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'))  # Remove punctuation
+        terms = query.lower().split()  # Convert to lowercase and split
+        terms = [term for term in terms if term not in self.stopwords]  # Remove stopwords
+        terms = [self.stemmer.stem(term) for term in terms]  # Perform stemming
         return terms
 
     def perform_query(self, query):
-        """执行查询并返回排序后的结果"""
+        """Perform the query and return sorted results"""
         query_terms = self.process_query(query)
         results = {}
         for doc_id, doc_terms in self.index.items():
             score = sum(doc_terms.get(term, 0) for term in query_terms)
             if score > 0:
                 results[doc_id] = score
-        # 结果按得分降序排序, 并返回前15个结果, 如果不足15个则返回全部结果
+        # Sort results by score in descending order and return the top 15 results, or all results if fewer than 15
         sorted_results = sorted(results.items(), key=lambda x: x[1], reverse=True)[:15]
         return sorted_results
 
     def interactive_mode(self):
-        """交互模式：输入查询并打印结果。"""
+        """Interactive mode: input queries and print results."""
         while True:
             query = input("Enter your query (or 'QUIT' to exit): ")
             if query.upper() == 'QUIT':
                 break
-            start_time = time.time()  # 查询开始时间
+            start_time = time.time()  # Query start time
             results = self.perform_query(query)
-            end_time = time.time()  # 查询结束时间
-            duration = end_time - start_time  # 计算时间差
-            print(f"Query completed in {duration:.4f} seconds.")  # 打印查询用时
+            end_time = time.time()  # Query end time
+            duration = end_time - start_time  # Calculate time difference
+            print(f"Query completed in {duration:.4f} seconds.")  # Print query time
             if results:
                 print(f"{'Rank':<5}{'Doc ID':<10}{'Score':<10}")
                 for rank, (doc_id, score) in enumerate(results, start=1):
@@ -66,7 +66,7 @@ class BM25:
                 print("No results found.")
 
     def automatic_mode(self, queries_file, output_file):
-        """自动模式：从文件读取查询并将结果写入到脚本的同级目录下"""
+        """Automatic mode: read queries from file and write results to the same directory as the script"""
         with open(queries_file, 'r', encoding='utf-8') as qfile, \
                 open(output_file, 'w', encoding='utf-8') as ofile:
             total_time = 0
@@ -91,7 +91,7 @@ def main():
 
     index_file_path = os.path.join(os.getcwd(), "21207500-small.index.json")
     stopwords_file_path = os.path.join(args.path, "files", "stopwords.txt")
-    if not os.path.exists(stopwords_file_path):  # 如果stopwords_file_path中的文件不存在,则使用项目内的的stopwords.txt文件
+    if not os.path.exists(stopwords_file_path):  # If the file in stopwords_file_path does not exist, use the project's stopwords.txt file
         print(f"Stopwords file not found at {stopwords_file_path}. Using project's stopwords file.")
         stopwords_file_path = os.path.join(os.getcwd(), "files", "stopwords.txt")
     bm25 = BM25(index_file_path, stopwords_file_path)
