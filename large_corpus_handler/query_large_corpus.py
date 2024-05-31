@@ -1,28 +1,6 @@
 """
 Student ID: 21207500
 Student Name: Liyan Tao
-
-query_large_corpus.py
-
-该程序允许用户提交查询以从小型语料库中检索内容，或运行标准语料库查询以评估系统。必须使用BM25模型进行检索。
-每次运行此程序时，应首先将索引加载到内存中（在当前工作目录中名为“21207500-large.index”），以便查询尽可能快。
-
-该程序应根据名为“-m”的命令行参数提供两种模式。这些模式如下：
-
-1. 交互模式
-在此模式下，用户可以手动输入查询，并在命令行中看到前15个结果，按相似度得分从高到低排序。
-输出应包含三列：排名、文档ID和相似度得分。
-程序运行示例如下所示:
-用户应继续被提示输入进一步的查询，直到他们输入“QUIT”。
-
-2. 自动模式
-在此模式下，应从语料库的“files”目录中的“queries.txt”文件读取标准查询。
-该文件每行有一个查询，从其查询ID开始。
-结果应存储在当前工作目录中的名为“21207500-large.results”的文件中（将“21207500”替换为你的UCD学生号码），
-该文件应包含四列：查询ID、文档ID、排名和相似度得分。所需输出的示例可以在语料库的“files”目录中的“sample_output.txt”文件中找到。
-
-通过以下方式运行程序可以激活自动模式：
-./query_large_corpus.py -m automatic -p /path/to/comp3009j-corpus-large
 """
 
 import os
@@ -54,7 +32,7 @@ class BM25:
             return set(line.strip() for line in file)
 
     def process_query(self, query):
-        """处理查询：转换为小写，移除标点，去除停用词，执行词干提取。"""
+        """处理查询：将查询转换为小写，移除标点，去除停用词，执行词干提取。"""
         query = query.translate(str.maketrans('', '', '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'))  # 移除标点
         terms = query.lower().split()  # 转换为小写并分割
         terms = [term for term in terms if term not in self.stopwords]  # 去除停用词
@@ -62,7 +40,7 @@ class BM25:
         return terms
 
     def perform_query(self, query):
-        """执行查询并返回排序后的文档列表。假设使用简单的BM25得分排序。"""
+        """执行查询并返回排序后的结果"""
         query_terms = self.process_query(query)
         results = {}
         for doc_id, doc_terms in self.index.items():
@@ -74,7 +52,7 @@ class BM25:
         return sorted_results
 
     def interactive_mode(self):
-        """交互模式：用户输入查询并看到结果。"""
+        """交互模式：输入查询并打印结果。"""
         while True:
             query = input("Enter your query (or 'QUIT' to exit): ")
             if query.upper() == 'QUIT':
@@ -92,7 +70,7 @@ class BM25:
                 print("No results found.")
 
     def automatic_mode(self, queries_file, output_file):
-        """自动模式：从文件读取查询并将结果写入另一个文件。"""
+        """自动模式：从文件读取查询并将结果写入到脚本的同级目录下"""
         with open(queries_file, 'r', encoding='utf-8') as qfile, \
                 open(output_file, 'w', encoding='utf-8') as ofile:
             total_time = 0
@@ -111,12 +89,13 @@ def main():
     parser = argparse.ArgumentParser(description="Query and retrieve documents.")
     parser.add_argument('-m', '--mode', type=str, choices=['interactive', 'automatic'], required=True,
                         help="Mode of operation")
-    parser.add_argument('-p', '--path', type=str, required=True, help="Path to the corpus")
+    parser.add_argument('-p', '--path', type=str, required=True, help="Path to the large corpus")
     args = parser.parse_args()
 
     index_file_path = os.path.join(os.getcwd(), "21207500-large.index.json")
     stopwords_file_path = os.path.join(args.path, "files", "stopwords.txt")
-    if not os.path.exists(stopwords_file_path):  # 如果stopwords_file_path中的文件不存在,则使用默认的stopwords.txt文件
+    if not os.path.exists(stopwords_file_path):  # 如果stopwords_file_path中的文件不存在,则使用项目内的的stopwords.txt文件
+        print(f"Stopwords file not found at {stopwords_file_path}. Using project's stopwords file.")
         stopwords_file_path = os.path.join(os.getcwd(), "files", "stopwords.txt")
 
     bm25 = BM25(index_file_path, stopwords_file_path)

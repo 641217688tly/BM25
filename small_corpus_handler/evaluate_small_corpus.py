@@ -1,25 +1,9 @@
 """
 Student ID: 21207500
 Student Name: Liyan Tao
-
-evaluate_small_corpus.py
-
-该程序基于query_small_corpus.py自动模式的输出（存储在当前工作目录中的“21207500-small.results”文件中，将“21207500”替换为你的UCD学生号码）计算适当的评估指标。
-
-程序应根据语料库的“files”目录中的“qrels.txt”文件中包含的相关性判断计算以下指标：
-
-Precision
-Recall
-R-Precision
-P@15
-MAP
-NDCG@15
-
-程序应通过以下方式运行：
-./evaluate_small_corpus.py -p /path/to/comp3009j-corpus-small
 """
+
 import argparse
-import copy
 import math
 import os
 
@@ -30,6 +14,7 @@ class Estimator:
         self.rel = self.load_qrels(qrels_file_path)
 
     def load_results(self, file_path='results-single.txt'):
+        """加载results文件, 返回一个字典, 其中key为query_id, value为一个列表, 其中每个元素为一个字典, 字典内的键分别为doc_id, rank, score"""
         retrieved = {}
         with open(file_path, 'r') as file:
             for line in file:
@@ -41,6 +26,7 @@ class Estimator:
         return retrieved
 
     def load_qrels(self, file_path='qrels-single.txt'):
+        """加载qrels文件, 返回一个字典, 其中key为query_id, value为一个字典, 其中key为doc_id, value为relevance_score"""
         relevant = {}
         with open(file_path, 'r') as file:
             for line in file:
@@ -49,11 +35,12 @@ class Estimator:
                     relevant[query_id] = {}
                 relevant[query_id][doc_id] = int(relevance_score)
         # relevant: {'1': {'d1': 3, 'd3': 2, 'd7': 1, 'd10': 3, 'd11': 2, 'd16': 3, 'd17': 2, 'd18': 1, 'd2': 0, 'd6': 0, 'd8': 0, 'd12': 0, 'd13': 0, 'd14': 0, 'd15': 0, 'd20': 0}}
-        # TODO 注意!!!此处的relevance不是严格意义上的rel, 它包含了所有的相关性判断, 即相关性既可能大于0(有相关性), 也可能等于0(无相关性)
-        # TODO 所以在求某个query的|rel|时需要先遍历relevant[query_id]中相关性判断大于0(即有相关性)的文档数
+        # 注意!!!此处的relevance不是严格意义上的rel, 它包含了所有的相关性判断, 即相关性既可能大于0(有相关性), 也可能等于0(无相关性)
+        # 所以在求某个query的|rel|时需要先遍历relevant[query_id]中相关性判断大于0(即有相关性)的文档数
         return relevant
 
-    def retrieved_relevant(self, retrieved, relevant, query_id):  # 取retrieved和relevant的交集, 使得retrieved中的文档都有相关性判断
+    def retrieved_relevant(self, retrieved, relevant, query_id):
+        """取retrieved和relevant的交集, retrieved内未出现在relevant中的文档的relevance也会被赋值为-1, 这使得retrieved中的文档都有相关性判断"""
         rel_docs = relevant[
             query_id]  # {'d1': 3, 'd3': 2, 'd7': 1, 'd10': 3, 'd11': 2, 'd16': 3, 'd17': 2, 'd18': 1, 'd2': 0, 'd6': 0, 'd8': 0, 'd12': 0, 'd13': 0, 'd14': 0, 'd15': 0, 'd20': 0}
         ret_docs = retrieved[
@@ -68,10 +55,11 @@ class Estimator:
                 ret_doct['relevance'] = -1  # 如果没有相关性判断, 则将其相关性设置为-1
                 rel_ret_docs.append(ret_doct)
         # rel_ret_docs: [{'doc_id': 'd12', 'rank': 1, 'score': 18.0, 'relevance': 0}, {'doc_id': 'd1', 'rank': 2, 'score': 17.0, 'relevance': 3}, {'doc_id': 'd19', 'rank': 3, 'score': 16.0, 'relevance': -1}, {'doc_id': 'd15', 'rank': 4, 'score': 15.0, 'relevance': 0}, {'doc_id': 'd11', 'rank': 5, 'score': 14.0, 'relevance': 2}, {'doc_id': 'd4', 'rank': 6, 'score': 13.0, 'relevance': -1}, {'doc_id': 'd7', 'rank': 7, 'score': 12.0, 'relevance': 1}, {'doc_id': 'd9', 'rank': 8, 'score': 11.0, 'relevance': -1}, {'doc_id': 'd6', 'rank': 9, 'score': 10.0, 'relevance': 0}, {'doc_id': 'd14', 'rank': 10, 'score': 9.0, 'relevance': 0}, {'doc_id': 'd3', 'rank': 11, 'score': 8.0, 'relevance': 2}, {'doc_id': 'd5', 'rank': 12, 'score': 7.0, 'relevance': -1}, {'doc_id': 'd16', 'rank': 13, 'score': 6.0, 'relevance': 3}, {'doc_id': 'd18', 'rank': 14, 'score': 5.0, 'relevance': 1}, {'doc_id': 'd13', 'rank': 15, 'score': 4.0, 'relevance': 0}, {'doc_id': 'd20', 'rank': 16, 'score': 3.0, 'relevance': 0}, {'doc_id': 'd8', 'rank': 17, 'score': 2.0, 'relevance': 0}, {'doc_id': 'd2', 'rank': 18, 'score': 1.0, 'relevance': 0}]
-        # TODO rel_ret_docs将为retrieved添加relevance字段, 其中没有被相关性判断(即没有出现在relevant中)的文档其相关性被赋值为-1
+        # rel_ret_docs将为retrieved添加relevance字段, 其中没有被相关性判断(即没有出现在relevant中)的文档其相关性被赋值为-1
         return rel_ret_docs
 
     def precision(self, retrieved, relevant):
+        """Calculate the precision"""
         precisions = 0
         for query_id in retrieved:
             rel_ret_docs = self.retrieved_relevant(retrieved, relevant, query_id)
@@ -83,6 +71,7 @@ class Estimator:
         return precisions / len(retrieved)
 
     def recall(self, retrieved, relevant):
+        """Calculate the recall"""
         recalls = 0
         for query_id in retrieved:  # 对于某一个查询
             rel_ret_docs = self.retrieved_relevant(retrieved, relevant, query_id)
@@ -98,6 +87,7 @@ class Estimator:
         return recalls / len(retrieved)
 
     def precision_at_10(self, retrieved, relevant):
+        """Calculate the precision@10"""
         precisions = 0
         for query_id in retrieved:
             relevant_docs_num = 0
@@ -110,6 +100,7 @@ class Estimator:
         return precisions / len(retrieved)
 
     def r_precision(self, retrieved, relevant):
+        """Calculate the R-precision"""
         r_precisions = 0
         for query_id in retrieved:
             relevant_docs_total_num = 0
@@ -126,6 +117,7 @@ class Estimator:
         return r_precisions / len(retrieved)
 
     def map(self, retrieved, relevant):
+        """Calculate the MAP"""
         maps = 0
         for query_id in retrieved:
             relevant_docs_total_num = 0
@@ -143,7 +135,8 @@ class Estimator:
             maps = maps + map / (relevant_docs_total_num)
         return maps / len(retrieved)
 
-    def ndcg_at_n(self, retrieved, relevant, n = 15):  # TODO 此方法将没有进行相关度判断的文档也视作相关度为0
+    def ndcg_at_n(self, retrieved, relevant, n=15):
+        """Calculate the NDCG@n"""
         ndcgs = 0
         for query_id in retrieved:
             rel_ret_docs = self.retrieved_relevant(retrieved, relevant, query_id)
@@ -194,6 +187,7 @@ class Estimator:
         return ndcgs / len(retrieved)
 
     def evaluate(self):
+        """Print the evaluation results"""
         print("Evaluation  results:")
         print(f"Precision:    {self.precision(self.ret, self.rel):.3f}")
         print(f"Recall:       {self.recall(self.ret, self.rel):.3f}")
@@ -209,11 +203,12 @@ def main():
     args = parser.parse_args()
 
     qrels_file_path = os.path.join(args.path, 'files', 'qrels.txt')
-    if not os.path.exists(qrels_file_path):
+    if not os.path.exists(qrels_file_path):  # 如果qrels_file_path中的文件不存在,则使用项目内的的qrels文件
+        print(f"Qrels file not found at {qrels_file_path}. Using project's qrels file.")
         qrels_file_path = os.path.join(os.getcwd(), 'files', 'qrels-single.txt')
 
     results_file_path = os.path.join(os.getcwd(), '21207500-small.results')
-    if not os.path.exists(results_file_path):  # 如果stopwords_file_path中的文件不存在,则使用默认的stopwords.txt文件
+    if not os.path.exists(results_file_path):
         print(
             "Results file not found. You should run the query_small_corpus.py script under small_corpus_handler folder.")
 
