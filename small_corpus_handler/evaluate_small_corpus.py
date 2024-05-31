@@ -143,10 +143,9 @@ class Estimator:
             maps = maps + map / (relevant_docs_total_num)
         return maps / len(retrieved)
 
-    def ndcg_at_15(self, retrieved, relevant):  # TODO 此方法将没有进行相关度判断的文档也视作相关度为0
+    def ndcg_at_n(self, retrieved, relevant, n = 15):  # TODO 此方法将没有进行相关度判断的文档也视作相关度为0
         ndcgs = 0
         for query_id in retrieved:
-            ndcg = 0
             rel_ret_docs = self.retrieved_relevant(retrieved, relevant, query_id)
             for i in range(len(rel_ret_docs)):  # 计算 Discounted Cumulated Gain
                 if i == 0:
@@ -166,9 +165,9 @@ class Estimator:
                     else:  # rel_ret_docs[j]['relevance'] == -1
                         rel_ret_docs[i]['dcg'] = 0 + rel_ret_docs[i - 1]['dcg']
             # 将temp_rel_ret_docs按照relevance的大小降序排序
-            temp_rel_ret_docs = copy.deepcopy(rel_ret_docs)
-            temp_rel_ret_docs.sort(key=lambda x: x['relevance'], reverse=True)
-
+            temp_rel_ret_docs = relevant[query_id]
+            temp_rel_ret_docs = sorted(temp_rel_ret_docs.items(), key=lambda x: x[1], reverse=True)
+            temp_rel_ret_docs = [{'doc_id': doc_id, 'relevance': relevance} for doc_id, relevance in temp_rel_ret_docs]
             for j in range(len(temp_rel_ret_docs)):  # 计算 Ideal DCG vector和 Normalised Discounted Cumulated Gain
                 if j == 0:
                     if temp_rel_ret_docs[j]['relevance'] > 0:
@@ -179,20 +178,19 @@ class Estimator:
                         temp_rel_ret_docs[j]['idcg'] = 0
                 else:
                     if temp_rel_ret_docs[j]['relevance'] > 0:
+                        # print(f'j: {j}; temp_rel_ret_docs[j]: {temp_rel_ret_docs[j]};  temp_rel_ret_docs[j - 1]: {temp_rel_ret_docs[j - 1]}')
                         temp_rel_ret_docs[j]['idcg'] = (temp_rel_ret_docs[j]['relevance'] / math.log2(j + 1)) + \
-                                                       temp_rel_ret_docs[j - 1][
-                                                           'idcg']
+                                                       temp_rel_ret_docs[j - 1]['idcg']
                     elif temp_rel_ret_docs[j]['relevance'] == 0:
                         temp_rel_ret_docs[j]['idcg'] = 0 + temp_rel_ret_docs[j - 1]['idcg']
                     else:  # rel_ret_docs[j]['relevance'] == -1
                         temp_rel_ret_docs[j]['idcg'] = 0 + temp_rel_ret_docs[j - 1]['idcg']
             # 计算NDCG@10(如果retrieved的文档数小于10, 则取最接近10的文档数)
-            count = 0
-            while count < 15 and count < len(rel_ret_docs):
-                if temp_rel_ret_docs[count]['idcg'] != 0:
-                    ndcg = ndcg + rel_ret_docs[count]['dcg'] / temp_rel_ret_docs[count]['idcg']
-                count = count + 1
-            ndcgs = ndcgs + ndcg / (count + 1)
+            if len(rel_ret_docs) < n:
+                n = len(rel_ret_docs)
+            ndcg = rel_ret_docs[min(n - 1, len(rel_ret_docs) - 1)]['dcg'] / \
+                   temp_rel_ret_docs[min(n - 1, len(temp_rel_ret_docs) - 1)]['idcg']
+            ndcgs = ndcgs + ndcg
         return ndcgs / len(retrieved)
 
     def evaluate(self):
@@ -202,7 +200,7 @@ class Estimator:
         print(f"R-precision:  {self.r_precision(self.ret, self.rel):.3f}")
         print(f"P@15:         {self.precision_at_10(self.ret, self.rel):.3f}")
         print(f"MAP:          {self.map(self.ret, self.rel):.3f}")
-        print(f"NDCG@15       {self.ndcg_at_15(self.ret, self.rel):.3f}")
+        print(f"NDCG@15       {self.ndcg_at_n(self.ret, self.rel, 15):.3f}")
 
 
 def main():
