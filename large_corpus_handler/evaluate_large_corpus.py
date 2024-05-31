@@ -13,7 +13,7 @@ class Estimator:
         self.ret = self.load_results(results_file_path)
         self.rel = self.load_qrels(qrels_file_path)
 
-    def load_results(self, file_path='results-single.txt'):
+    def load_results(self, file_path='results.txt'):
         """Load the results file and return a dictionary where the key is query_id and the value is a list of dictionaries. Each dictionary has keys doc_id, rank, and score."""
         retrieved = {}
         with open(file_path, 'r') as file:
@@ -25,7 +25,7 @@ class Estimator:
         # retrieved: {'1': [{'doc_id': 'd12', 'rank': 1, 'score': 18.0}, {'doc_id': 'd1', 'rank': 2, 'score': 17.0}, {'doc_id': 'd19', 'rank': 3, 'score': 16.0}, {'doc_id': 'd15', 'rank': 4, 'score': 15.0}, {'doc_id': 'd11', 'rank': 5, 'score': 14.0}, {'doc_id': 'd4', 'rank': 6, 'score': 13.0}, {'doc_id': 'd7', 'rank': 7, 'score': 12.0}, {'doc_id': 'd9', 'rank': 8, 'score': 11.0}, {'doc_id': 'd6', 'rank': 9, 'score': 10.0}, {'doc_id': 'd14', 'rank': 10, 'score': 9.0}, {'doc_id': 'd3', 'rank': 11, 'score': 8.0}, {'doc_id': 'd5', 'rank': 12, 'score': 7.0}, {'doc_id': 'd16', 'rank': 13, 'score': 6.0}, {'doc_id': 'd18', 'rank': 14, 'score': 5.0}, {'doc_id': 'd13', 'rank': 15, 'score': 4.0}, {'doc_id': 'd20', 'rank': 16, 'score': 3.0}, {'doc_id': 'd8', 'rank': 17, 'score': 2.0}, {'doc_id': 'd2', 'rank': 18, 'score': 1.0}]}
         return retrieved
 
-    def load_qrels(self, file_path='qrels-single.txt'):
+    def load_qrels(self, file_path='qrels.txt'):
         """Load the qrels file and return a dictionary where the key is query_id and the value is a dictionary. The dictionary has keys as doc_id and values as relevance_score."""
         relevant = {}
         with open(file_path, 'r') as file:
@@ -218,7 +218,7 @@ def main():
     qrels_file_path = os.path.join(args.path, 'files', 'qrels.txt')
     if not os.path.exists(qrels_file_path):  # If the file in qrels_file_path does not exist, use the project's qrels file
         print(f"Qrels file not found at {qrels_file_path}. Using project's qrels file.")
-        qrels_file_path = os.path.join(os.getcwd(), 'files', 'qrels-single.txt')
+        qrels_file_path = os.path.join(os.getcwd(), 'files', 'qrels.txt')
 
     results_file_path = os.path.join(os.getcwd(), '21207500-large.results')
     if not os.path.exists(results_file_path):
