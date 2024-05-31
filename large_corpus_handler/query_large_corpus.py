@@ -114,7 +114,7 @@ def main():
     parser.add_argument('-p', '--path', type=str, required=True, help="Path to the corpus")
     args = parser.parse_args()
 
-    index_file_path = os.path.join(os.getcwd(), "(old)21207500-large.index.json")
+    index_file_path = os.path.join(os.getcwd(), "21207500-large.index.json")
     stopwords_file_path = os.path.join(args.path, "files", "stopwords.txt")
     if not os.path.exists(stopwords_file_path):  # 如果stopwords_file_path中的文件不存在,则使用默认的stopwords.txt文件
         stopwords_file_path = os.path.join(os.getcwd(), "files", "stopwords.txt")
