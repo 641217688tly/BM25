@@ -1,4 +1,7 @@
 """
+Student ID: 21207500
+Student Name: Liyan Tao
+
 evaluate_small_corpus.py
 
 该程序基于query_small_corpus.py自动模式的输出（存储在当前工作目录中的“21207500-small.results”文件中，将“21207500”替换为你的UCD学生号码）计算适当的评估指标。

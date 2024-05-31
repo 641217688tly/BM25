@@ -1,4 +1,7 @@
 """
+Student ID: 21207500
+Student Name: Liyan Tao
+
 index_small_corpus.py
 
 该程序旨在读取小型语料库, 处理其内容并创建索引。

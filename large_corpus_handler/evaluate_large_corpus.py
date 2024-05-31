@@ -1,4 +1,7 @@
 """
+Student ID: 21207500
+Student Name: Liyan Tao
+
 evaluate_large_corpus.py
 
 该程序基于query_large_corpus.py自动模式的输出(存储在当前工作目录中的“21207500-large.results”文件中)

@@ -1,4 +1,7 @@
 """
+Student ID: 21207500
+Student Name: Liyan Tao
+
 query_large_corpus.py
 
 该程序允许用户提交查询以从小型语料库中检索内容，或运行标准语料库查询以评估系统。必须使用BM25模型进行检索。
@@ -82,9 +85,9 @@ class BM25:
             duration = end_time - start_time  # 计算时间差
             print(f"Query completed in {duration:.4f} seconds.")  # 打印查询用时
             if results:
-                print(f"{'Rank':<5}{'Doc ID':<10}{'Score':<10}")
+                print(f"{'Rank':<10}{'Doc ID':<25}{'Score'}")
                 for rank, (doc_id, score) in enumerate(results, start=1):
-                    print(f"{rank:<5}{doc_id:<10}{score:<10.4f}")
+                    print(f"{rank:<10}{doc_id:<25}{score:.4f}")
             else:
                 print("No results found.")
 

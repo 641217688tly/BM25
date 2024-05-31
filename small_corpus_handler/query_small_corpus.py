@@ -1,4 +1,7 @@
 """
+Student ID: 21207500
+Student Name: Liyan Tao
+
 query_small_corpus.py
 
 该程序允许用户提交查询以从小型语料库中检索内容，或运行标准语料库查询以评估系统。必须使用BM25模型进行检索。
