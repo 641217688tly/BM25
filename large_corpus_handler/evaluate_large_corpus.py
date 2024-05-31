@@ -143,7 +143,7 @@ class Estimator:
             maps = maps + map / (relevant_docs_total_num)
         return maps / len(retrieved)
 
-    def ndcg_at_n(self, retrieved, relevant, n = 15):  # TODO 此方法将没有进行相关度判断的文档也视作相关度为0
+    def ndcg_at_n(self, retrieved, relevant, n=15):  # TODO 此方法将没有进行相关度判断的文档也视作相关度为0
         ndcgs = 0
         for query_id in retrieved:
             rel_ret_docs = self.retrieved_relevant(retrieved, relevant, query_id)
@@ -193,6 +193,25 @@ class Estimator:
             ndcgs = ndcgs + ndcg
         return ndcgs / len(retrieved)
 
+    def bpref10(self, retrieved, relevant):
+        bprefs = 0
+        for query_id in retrieved:
+            bpref = 0
+            relevant_docs_total_num = 0
+            for rel_doc in relevant[query_id]:
+                if relevant[query_id][rel_doc] > 0:
+                    relevant_docs_total_num = relevant_docs_total_num + 1
+            rel_ret_docs = self.retrieved_relevant(retrieved, relevant, query_id)
+            irrelevant_docs_num = 0
+            for i in range(len(rel_ret_docs)):
+                if rel_ret_docs[i]['relevance'] == 0:
+                    irrelevant_docs_num = irrelevant_docs_num + 1
+                elif rel_ret_docs[i]['relevance'] > 0:
+                    bpref = bpref + (1 - irrelevant_docs_num / (relevant_docs_total_num + 10))
+            bpref = bpref / relevant_docs_total_num
+            bprefs = bprefs + bpref
+        return bprefs / len(retrieved)
+
     def evaluate(self):
         print("Evaluation  results:")
         print(f"Precision:    {self.precision(self.ret, self.rel):.3f}")
@@ -201,6 +220,7 @@ class Estimator:
         print(f"P@15:         {self.precision_at_10(self.ret, self.rel):.3f}")
         print(f"MAP:          {self.map(self.ret, self.rel):.3f}")
         print(f"NDCG@15       {self.ndcg_at_n(self.ret, self.rel, 15):.3f}")
+        print(f"bpref10:        {self.bpref10(self.ret, self.rel):.3f}")
 
 
 def main():
